@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas - Dashboard</title>
+  <link rel="icon" href="https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #1a1a2e;
+      --bg-card-hover: #222240;
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.3);
+      --accent-light: #818cf8;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: rgba(99, 102, 241, 0.15);
+      --success: #22c55e;
+      --success-glow: rgba(34, 197, 94, 0.3);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      z-index: 0;
+    }
+
+    .bg-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(150px);
+      opacity: 0.15;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .bg-glow-1 {
+      top: -200px;
+      right: -200px;
+      background: var(--accent);
+      animation: float 8s ease-in-out infinite;
+    }
+
+    .bg-glow-2 {
+      bottom: -200px;
+      left: -200px;
+      background: #8b5cf6;
+      animation: float 8s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(30px, -30px); }
+    }
+
+    /* Container */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 48px;
+      width: 100%;
+      max-width: 580px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 0 80px rgba(99, 102, 241, 0.05);
+      animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Shield icon */
+    .shield-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      box-shadow: 0 8px 32px var(--accent-glow);
+      position: relative;
+    }
+
+    .shield-icon svg {
+      width: 36px;
+      height: 36px;
+      fill: white;
+    }
+
+    .shield-icon::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      z-index: -1;
+      opacity: 0.4;
+      filter: blur(12px);
+    }
+
+    /* Typography */
+    .card h1 {
+      font-size: 28px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--text-primary), var(--accent-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    .card .subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    /* Feature list */
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      background: rgba(99, 102, 241, 0.06);
+      border: 1px solid rgba(99, 102, 241, 0.1);
+      border-radius: 14px;
+      transition: all 0.2s;
+    }
+
+    .feature:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.2);
+      transform: translateX(4px);
+    }
+
+    .feature-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(99, 102, 241, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .feature-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--accent-light);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .feature-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .feature-text strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      width: 100%;
+      padding: 16px 32px;
+      border: none;
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: white;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px var(--accent-glow);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .btn-primary:hover::before { opacity: 1; }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--success), #16a34a);
+    }
+
+    .btn-success:hover {
+      box-shadow: 0 8px 32px var(--success-glow);
+    }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0 auto 24px;
+      width: fit-content;
+    }
+
+    .status-badge.active {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      color: var(--success);
+    }
+
+    .status-badge.inactive {
+      background: rgba(234, 179, 8, 0.1);
+      border: 1px solid rgba(234, 179, 8, 0.25);
+      color: #eab308;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-badge.active .status-dot { background: var(--success); }
+    .status-badge.inactive .status-dot { background: #eab308; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 24px 0;
+    }
+
+    /* Footer text */
+    .footer-text {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+
+    /* Security badge row */
+    .security-badges {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .sec-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .sec-badge svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-muted);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Loading spinner */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.4s;
+    }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(99, 102, 241, 0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .card { padding: 32px 24px; }
+      .card h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="container">
+    <!-- FIRST TIME VIEW -->
+    <div class="card" id="firstTimeCard" style="display:none;">
+      <div class="shield-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="status-badge inactive" style="display:flex;">
+        <div class="status-dot"></div>
+        Not Activated
+      </div>
+      <h1>Welcome to Secure Gateway</h1>
+      <p class="subtitle">
+        This is a privacy-first gaming platform disguised as a Canvas LMS portal. 
+        Activate to launch games in a fully cloaked environment that's undetectable.
+      </p>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div class="feature-text">
+            <strong>about:blank Cloaking</strong> — Game runs inside an undetectable blank tab. No URL, no trace.
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="feature-text">
+            <strong>Auto-Redirect Cover</strong> — Original tab instantly redirects to a real Canvas login page.
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          </div>
+          <div class="feature-text">
+            <strong>Zero Footprint</strong> — No history entries, no suspicious tabs. Fully stealth.
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div class="feature-text">
+            <strong>Instant Launch</strong> — One click to deploy. No downloads, no installs.
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="activateSite()">
+        ⚡ Activate Secure Gateway
+      </button>
+
+      <div class="footer-text">
+        By activating, a new cloaked tab will open with the game.<br>
+        This tab will redirect to Canvas as cover.
+      </div>
+
+      <div class="security-badges">
+        <div class="sec-badge">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Encrypted
+        </div>
+        <div class="sec-badge">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          Undetectable
+        </div>
+        <div class="sec-badge">
+          <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Verified
+        </div>
+      </div>
+    </div>
+
+    <!-- RETURNING USER VIEW -->
+    <div class="card" id="returningCard" style="display:none;">
+      <div class="shield-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="status-badge active" style="display:flex;">
+        <div class="status-dot"></div>
+        Activated &amp; Secured
+      </div>
+      <h1>Secure Gateway Active</h1>
+      <p class="subtitle">
+        Your gateway is activated and ready. Launch to open the game in a fully cloaked about:blank tab. 
+        This tab will auto-redirect as cover.
+      </p>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="feature-text">
+            <strong>Status: Fully Operational</strong> — All stealth systems active. No monitoring detected.
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="feature-text">
+            <strong>Quick Launch</strong> — Click below to deploy in under 2 seconds.
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary btn-success" onclick="launchGame()">
+        🚀 Launch Cloaked Session
+      </button>
+
+      <div class="divider"></div>
+
+      <div class="footer-text">
+        Session will open in about:blank • This tab redirects to Canvas<br>
+        Press <strong>F</strong> for fullscreen in-game • Close the tab to exit
+      </div>
+
+      <div class="security-badges">
+        <div class="sec-badge">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Encrypted
+        </div>
+        <div class="sec-badge">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          Undetectable
+        </div>
+        <div class="sec-badge">
+          <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Verified
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ─── Game HTML that gets injected into about:blank ───
+    const GAME_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas - Dashboard</title>
+  <link rel="icon" href="https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0f;
+      color: #f1f5f9;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Top bar */
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: rgba(18, 18, 26, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(99, 102, 241, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 10000;
+      transition: transform 0.3s ease;
+    }
+
+    .top-bar.hidden-bar {
+      transform: translateY(-100%);
+    }
+
+    .bar-left, .bar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bar-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 10px;
+      background: rgba(99,102,241,0.08);
+      color: #c7d2fe;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .bar-btn:hover {
+      background: rgba(99,102,241,0.18);
+      border-color: rgba(99,102,241,0.35);
+      color: #fff;
+    }
+
+    .bar-btn svg {
+      width: 16px; height: 16px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    .bar-title {
+      font-size: 14px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f1f5f9, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.3px;
+    }
+
+    .bar-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(34,197,94,0.12);
+      color: #22c55e;
+      border: 1px solid rgba(34,197,94,0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Game container */
+    .game-wrap {
+      position: fixed;
+      top: 52px; left: 0; right: 0; bottom: 0;
+      background: #000;
+      transition: top 0.3s ease;
+    }
+
+    .game-wrap.fullscreen-mode {
+      top: 0;
+    }
+
+    .game-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Home overlay */
+    .home-overlay {
+      position: fixed;
+      inset: 0;
+      background: #0a0a0f;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .home-overlay.show { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .home-card {
+      background: #1a1a2e;
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 24px;
+      padding: 48px;
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .home-card h2 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #f1f5f9, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .home-card p {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    .home-btn {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      transition: all 0.2s;
+      margin: 6px;
+    }
+
+    .home-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.3); }
+
+    .home-btn.danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .home-btn.danger:hover { box-shadow: 0 8px 24px rgba(239,68,68,0.3); }
+
+    .key-hint {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      padding: 8px 14px;
+      background: rgba(18,18,26,0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 8px;
+      font-size: 11px;
+      color: #64748b;
+      z-index: 10001;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 11px;
+      color: #c7d2fe;
+      margin: 0 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar" id="topBar">
+    <div class="bar-left">
+      <button class="bar-btn" onclick="goHome()">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Home
+      </button>
+      <span class="bar-title">Gladihoppers</span>
+      <span class="bar-badge">Cloaked</span>
+    </div>
+    <div class="bar-right">
+      <button class="bar-btn" onclick="toggleFS()">
+        <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        Fullscreen
+      </button>
+      <button class="bar-btn danger-btn" onclick="closeSession()" style="border-color:rgba(239,68,68,0.25);background:rgba(239,68,68,0.08);color:#fca5a5;">
+        <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Close
+      </button>
+    </div>
+  </div>
+
+  <div class="game-wrap" id="gameWrap">
+  </div>
+
+  <div class="home-overlay" id="homeOverlay">
+    <div class="home-card">
+      <h2>Session Paused</h2>
+      <p>Your cloaked gaming session is paused. Resume to continue playing or close the tab to exit completely.</p>
+      <button class="home-btn" onclick="resumeGame()">▶ Resume Game</button>
+      <button class="home-btn danger" onclick="closeSession()">✕ Close Session</button>
+    </div>
+  </div>
+
+  <div class="key-hint" id="keyHint">
+    <kbd>F</kbd> Fullscreen &nbsp; <kbd>Esc</kbd> Exit fullscreen &nbsp; <kbd>H</kbd> Toggle bar
+  </div>
+
+  <script>
+    // Load the game
+    var iframe = document.createElement('iframe');
+    iframe.src = 'https://canvasinstructure.netlify.app/game.html';
+    iframe.allow = 'fullscreen; autoplay';
+    iframe.setAttribute('allowfullscreen', '');
+    document.getElementById('gameWrap').appendChild(iframe);
+
+    var isFullscreen = false;
+    var barHidden = false;
+
+    function toggleFS() {
+      var elem = document.documentElement;
+      if (!document.fullscreenElement) {
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+      }
+    }
+
+    document.addEventListener('fullscreenchange', function() {
+      isFullscreen = !!document.fullscreenElement;
+      if (isFullscreen) {
+        document.getElementById('topBar').classList.add('hidden-bar');
+        document.getElementById('gameWrap').classList.add('fullscreen-mode');
+      } else {
+        document.getElementById('topBar').classList.remove('hidden-bar');
+        document.getElementById('gameWrap').classList.remove('fullscreen-mode');
+      }
+    });
+
+    function goHome() {
+      document.getElementById('homeOverlay').classList.add('show');
+    }
+
+    function resumeGame() {
+      document.getElementById('homeOverlay').classList.remove('show');
+    }
+
+    function closeSession() {
+      window.close();
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'f' || e.key === 'F') {
+        if (document.activeElement === iframe) return;
+        toggleFS();
+      }
+      if (e.key === 'h' || e.key === 'H') {
+        barHidden = !barHidden;
+        document.getElementById('topBar').classList.toggle('hidden-bar', barHidden);
+        document.getElementById('gameWrap').classList.toggle('fullscreen-mode', barHidden);
+      }
+    });
+
+    // Fade out key hint after 5s
+    setTimeout(function() {
+      document.getElementById('keyHint').style.opacity = '0';
+      setTimeout(function() { document.getElementById('keyHint').style.display = 'none'; }, 300);
+    }, 5000);
+  <\/script>
+</body>
+</html>`;
+
+    // ─── Core Logic ───
+    const STORAGE_KEY = 'sg_activated';
+
+    function isActivated() {
+      return localStorage.getItem(STORAGE_KEY) === 'true';
+    }
+
+    function init() {
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+      }, 600);
+
+      if (isActivated()) {
+        document.getElementById('returningCard').style.display = 'block';
+      } else {
+        document.getElementById('firstTimeCard').style.display = 'block';
+      }
+    }
+
+    function openCloakedTab() {
+      const win = window.open('about:blank', '_blank');
+      if (win) {
+        win.document.open();
+        win.document.write(GAME_HTML);
+        win.document.close();
+      }
+    }
+
+    function activateSite() {
+      localStorage.setItem(STORAGE_KEY, 'true');
+      openCloakedTab();
+      // Redirect original tab to Canvas
+      setTimeout(() => {
+        window.location.href = 'https://allenisd.instructure.com/?login_success=1';
+      }, 300);
+    }
+
+    function launchGame() {
+      openCloakedTab();
+      setTimeout(() => {
+        window.location.href = 'https://allenisd.instructure.com/?login_success=1';
+      }, 300);
+    }
+
+    init();
+  </script>
+</body>
+</html>
