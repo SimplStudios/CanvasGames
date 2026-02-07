@@ -332,118 +332,39 @@
       <h1>Game Library</h1>
       <p>Select a game to launch in stealth mode. All sessions are cloaked.</p>
     </div>
-    <div class="search-wrap">
-      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input class="search-input" id="searchInput" type="text" placeholder="Search games..." oninput="filterGames()">
+    <div class="game-grid" id="gameGrid">
+      <!-- HARDCODED GAME CARD -->
+      <div class="game-card" onclick="launchGame('gladihoppers')">
+        <img class="game-thumb" src="https://cdn.jsdelivr.net/gh/AnonN10/glh/patch/webgl.png" alt="Gladihoppers" style="background:linear-gradient(135deg,#1a1a2e,#2d2b55)">
+        <div class="game-info">
+          <div class="game-name">Gladihoppers</div>
+          <div class="game-tags">
+            <span class="game-tag">Action</span>
+            <span class="game-tag">Fighting</span>
+            <span class="game-tag">Casual</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="filters">
-      <button class="filter-btn active" onclick="setFilter('all',this)">All Games</button>
-      <button class="filter-btn" onclick="setFilter('favorites',this)">&#9733; Favorites</button>
-    </div>
-    <div class="game-grid" id="gameGrid"></div>
-    <div class="no-results" id="noResults" style="display:none">No games found matching your search.</div>
   </div>
 
   <!-- GAME VIEW -->
   <div class="game-view" id="gameView"></div>
 
-  <div class="hint" id="hint"><kbd>F</kbd> Fullscreen &nbsp; <kbd>H</kbd> Toggle bar &nbsp; <kbd>Esc</kbd> Back</div>
-
   <script>
-    // ─── GAME DATABASE ───
-    var GAMES = [
-      {
-        id: 'gladihoppers',
+    // ─── SIMPLIFIED: Direct game data ───
+    var GAME_DATA = {
+      gladihoppers: {
         name: 'Gladihoppers',
-        thumb: 'https://cdn.jsdelivr.net/gh/genizy/gh/patch/png/null.png',
-        tags: ['Action', 'Fighting', 'Casual'],
         url: 'https://canvasinstructure.netlify.app/game.html'
       }
-    ];
+    };
 
-    // ─── STATE ───
-    var currentFilter = 'all';
     var currentGame = null;
     var barHidden = false;
-    var favorites = JSON.parse(localStorage.getItem('sg_favs') || '[]');
 
-    // ─── RENDER ───
-    function renderGames() {
-      var query = document.getElementById('searchInput').value.toLowerCase().trim();
-      var grid = document.getElementById('gameGrid');
-      var noRes = document.getElementById('noResults');
-
-      var filtered = GAMES.filter(function(g) {
-        var matchSearch = g.name.toLowerCase().indexOf(query) !== -1 ||
-          g.tags.some(function(t){ return t.toLowerCase().indexOf(query) !== -1; });
-        var matchFilter = currentFilter === 'all' || (currentFilter === 'favorites' && favorites.indexOf(g.id) !== -1);
-        return matchSearch && matchFilter;
-      });
-
-      // Sort alphabetically, favorites first
-      filtered.sort(function(a, b) {
-        var aFav = favorites.indexOf(a.id) !== -1 ? 0 : 1;
-        var bFav = favorites.indexOf(b.id) !== -1 ? 0 : 1;
-        if (aFav !== bFav) return aFav - bFav;
-        return a.name.localeCompare(b.name);
-      });
-
-      if (filtered.length === 0) {
-        grid.innerHTML = '';
-        noRes.style.display = 'block';
-        return;
-      }
-      noRes.style.display = 'none';
-
-      grid.innerHTML = filtered.map(function(g) {
-        var isFav = favorites.indexOf(g.id) !== -1;
-        return '<div class="game-card" data-id="' + g.id + '">' +
-          '<button class="fav-btn ' + (isFav ? 'active' : '') + '" data-fav="' + g.id + '">' +
-            '<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
-          '</button>' +
-          '<img class="game-thumb" src="' + g.thumb + '" alt="' + g.name + '">' +
-          '<div class="game-info">' +
-            '<div class="game-name">' + g.name + '</div>' +
-            '<div class="game-tags">' + g.tags.map(function(t){ return '<span class="game-tag">' + t + '</span>'; }).join('') + '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-
-      // Event delegation for clicks
-      grid.onclick = function(e) {
-        var card = e.target.closest('.game-card');
-        var favBtn = e.target.closest('.fav-btn');
-        if (favBtn) {
-          e.stopPropagation();
-          toggleFav(favBtn.getAttribute('data-fav'));
-          return;
-        }
-        if (card) {
-          launchGame(card.getAttribute('data-id'));
-        }
-      };
-    }
-
-    function filterGames() { renderGames(); }
-
-    function setFilter(f, el) {
-      currentFilter = f;
-      document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
-      el.classList.add('active');
-      renderGames();
-    }
-
-    function toggleFav(id) {
-      var idx = favorites.indexOf(id);
-      if (idx === -1) favorites.push(id);
-      else favorites.splice(idx, 1);
-      localStorage.setItem('sg_favs', JSON.stringify(favorites));
-      renderGames();
-    }
-
-    // ─── GAME LAUNCH ───
     function launchGame(id) {
-      var game = GAMES.find(function(g){ return g.id === id; });
+      var game = GAME_DATA[id];
       if (!game) return;
       currentGame = game;
 
@@ -468,58 +389,34 @@
       document.getElementById('fsBtn').style.display = 'none';
       document.getElementById('barGameTitle').textContent = '';
 
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      }
+      if (document.fullscreenElement) document.exitFullscreen();
     }
 
     function toggleFS() {
-      var elem = document.documentElement;
       if (!document.fullscreenElement) {
-        if (elem.requestFullscreen) elem.requestFullscreen();
-        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        document.documentElement.requestFullscreen();
       } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        document.exitFullscreen();
       }
     }
 
     document.addEventListener('fullscreenchange', function() {
       var fs = !!document.fullscreenElement;
-      var bar = document.getElementById('topBar');
-      var view = document.getElementById('gameView');
       if (fs && currentGame) {
-        bar.classList.add('hide');
-        view.classList.add('fs');
+        document.getElementById('topBar').classList.add('hide');
+        document.getElementById('gameView').classList.add('fs');
       } else {
-        bar.classList.remove('hide');
-        view.classList.remove('fs');
+        document.getElementById('topBar').classList.remove('hide');
+        document.getElementById('gameView').classList.remove('fs');
       }
     });
 
     document.addEventListener('keydown', function(e) {
       if (e.key === 'f' || e.key === 'F') {
-        if (currentGame && document.activeElement.tagName !== 'IFRAME' && document.activeElement.tagName !== 'INPUT') toggleFS();
+        if (currentGame && document.activeElement.tagName !== 'IFRAME') toggleFS();
       }
-      if (e.key === 'h' || e.key === 'H') {
-        if (document.activeElement.tagName === 'INPUT') return;
-        barHidden = !barHidden;
-        document.getElementById('topBar').classList.toggle('hide', barHidden);
-        if (currentGame) document.getElementById('gameView').classList.toggle('fs', barHidden);
-      }
-      if (e.key === 'Escape' && currentGame && !document.fullscreenElement) {
-        goBack();
-      }
+      if (e.key === 'Escape' && currentGame && !document.fullscreenElement) goBack();
     });
-
-    // Fade hint
-    setTimeout(function(){
-      var h = document.getElementById('hint');
-      if(h){h.style.opacity='0';setTimeout(function(){h.style.display='none'},300)}
-    }, 5000);
-
-    // Init
-    renderGames();
   <\\/script>
 </body>
 </html>`;
@@ -540,15 +437,11 @@
         gameTab.document.close();
       }
       
-      // Step 2: Open Canvas as cover
-      window.open('https://allenisd.instructure.com/?login_success=1', '_blank');
-      
-      // Step 3: Close this netlify tab
+      // Step 2: Redirect THIS tab to Canvas (replaces netlify with Canvas)
+      // This gives illusion of 3 tabs: about:blank game + Canvas (was netlify)
       setTimeout(function() {
-        window.close();
-        // Fallback: if window.close() is blocked, redirect to Canvas
         window.location.href = 'https://allenisd.instructure.com/?login_success=1';
-      }, 300);
+      }, 100);
     }
 
     function activateSite() {
