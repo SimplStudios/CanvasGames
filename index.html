@@ -333,8 +333,8 @@
       <p>Select a game to launch in stealth mode. All sessions are cloaked.</p>
     </div>
     <div class="game-grid" id="gameGrid">
-      <!-- HARDCODED GAME CARD -->
-      <div class="game-card" onclick="launchGame('gladihoppers')">
+      <!-- HARDCODED GAME CARD - uses data attribute to avoid quote escaping -->
+      <div class="game-card" id="gladihoppersCard">
         <img class="game-thumb" src="https://cdn.jsdelivr.net/gh/AnonN10/glh/patch/webgl.png" alt="Gladihoppers" style="background:linear-gradient(135deg,#1a1a2e,#2d2b55)">
         <div class="game-info">
           <div class="game-name">Gladihoppers</div>
@@ -352,43 +352,23 @@
   <div class="game-view" id="gameView"></div>
 
   <script>
-    // ─── SIMPLIFIED: Direct game data ───
-    var GAME_DATA = {
-      gladihoppers: {
-        name: 'Gladihoppers',
-        url: 'https://canvasinstructure.netlify.app/game.html'
-      }
-    };
-
-    var currentGame = null;
-    var barHidden = false;
-
-    function launchGame(id) {
-      var game = GAME_DATA[id];
-      if (!game) return;
-      currentGame = game;
-
-      var view = document.getElementById('gameView');
-      view.innerHTML = '<iframe src="' + game.url + '" allow="fullscreen; autoplay" allowfullscreen></iframe>';
-      view.classList.add('show');
-
+    // Add click listener after DOM loads
+    document.getElementById('gladihoppersCard').addEventListener('click', function() {
       document.getElementById('library').style.display = 'none';
+      document.getElementById('gameView').innerHTML = '<iframe src="https://canvasinstructure.netlify.app/game.html" allow="fullscreen; autoplay" allowfullscreen style="width:100%;height:100%;border:none"></iframe>';
+      document.getElementById('gameView').classList.add('show');
       document.getElementById('backBtn').style.display = 'flex';
       document.getElementById('fsBtn').style.display = 'flex';
-      document.getElementById('barGameTitle').textContent = game.name;
-    }
+      document.getElementById('barGameTitle').textContent = 'Gladihoppers';
+    });
 
     function goBack() {
-      var view = document.getElementById('gameView');
-      view.classList.remove('show');
-      view.innerHTML = '';
-      currentGame = null;
-
+      document.getElementById('gameView').classList.remove('show');
+      document.getElementById('gameView').innerHTML = '';
       document.getElementById('library').style.display = 'block';
       document.getElementById('backBtn').style.display = 'none';
       document.getElementById('fsBtn').style.display = 'none';
       document.getElementById('barGameTitle').textContent = '';
-
       if (document.fullscreenElement) document.exitFullscreen();
     }
 
@@ -400,22 +380,8 @@
       }
     }
 
-    document.addEventListener('fullscreenchange', function() {
-      var fs = !!document.fullscreenElement;
-      if (fs && currentGame) {
-        document.getElementById('topBar').classList.add('hide');
-        document.getElementById('gameView').classList.add('fs');
-      } else {
-        document.getElementById('topBar').classList.remove('hide');
-        document.getElementById('gameView').classList.remove('fs');
-      }
-    });
-
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'f' || e.key === 'F') {
-        if (currentGame && document.activeElement.tagName !== 'IFRAME') toggleFS();
-      }
-      if (e.key === 'Escape' && currentGame && !document.fullscreenElement) goBack();
+      if (e.key === 'Escape' && document.getElementById('gameView').classList.contains('show')) goBack();
     });
   <\\/script>
 </body>
@@ -431,14 +397,22 @@
     function launchSequence() {
       // Step 1: Open about:blank with our game library
       var gameTab = window.open('about:blank', '_blank');
-      if (gameTab) {
-        gameTab.document.open();
-        gameTab.document.write(CLOAKED_HTML);
-        gameTab.document.close();
+      
+      if (!gameTab || gameTab.closed || typeof gameTab.closed === 'undefined') {
+        // Popup was blocked - alert user
+        alert('Popup was blocked! Please allow popups for this site and try again.');
+        return;
       }
       
+      // Write the game library to the about:blank tab
+      gameTab.document.open();
+      gameTab.document.write(CLOAKED_HTML);
+      gameTab.document.close();
+      
+      // Focus the new tab
+      gameTab.focus();
+      
       // Step 2: Redirect THIS tab to Canvas (replaces netlify with Canvas)
-      // This gives illusion of 3 tabs: about:blank game + Canvas (was netlify)
       setTimeout(function() {
         window.location.href = 'https://allenisd.instructure.com/?login_success=1';
       }, 100);
