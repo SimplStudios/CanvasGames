@@ -108,6 +108,20 @@
     .spinner { width: 48px; height: 48px; border: 3px solid rgba(99,102,241,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to{transform:rotate(360deg)} }
     .loading-text { margin-top: 16px; font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+    
+    /* Returning user launch screen */
+    .launch-screen { text-align: center; animation: fadeIn 0.5s; }
+    @keyframes fadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+    .launch-title { font-size: 48px; font-weight: 900; margin-bottom: 16px; background: linear-gradient(135deg, #fff, var(--accent-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: pulse-text 1.5s ease-in-out infinite; }
+    @keyframes pulse-text { 0%,100%{opacity:1} 50%{opacity:0.7} }
+    .launch-subtitle { font-size: 20px; color: var(--text-secondary); margin-bottom: 40px; }
+    .launch-click { font-size: 28px; font-weight: 700; color: var(--accent); animation: bounce 1s ease-in-out infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .launch-countdown { margin-top: 32px; font-size: 64px; font-weight: 900; color: var(--accent); opacity: 0.8; }
+    .launch-warning { margin-top: 16px; font-size: 14px; color: #ef4444; font-weight: 600; }
+    .launch-ring { width: 200px; height: 200px; border-radius: 50%; border: 4px solid var(--accent); margin: 0 auto 30px; display: flex; align-items: center; justify-content: center; animation: ring-pulse 2s ease-in-out infinite; }
+    @keyframes ring-pulse { 0%,100%{box-shadow: 0 0 0 0 rgba(99,102,241,0.4)} 50%{box-shadow: 0 0 0 30px rgba(99,102,241,0)} }
+    .launch-ring svg { width: 80px; height: 80px; fill: var(--accent); }
     @media (max-width: 600px) { .card { padding: 32px 24px; } .card h1 { font-size: 22px; } }
   </style>
 </head>
@@ -117,7 +131,7 @@
   <div class="bg-glow bg-glow-2"></div>
 
   <div class="loading-overlay" id="loading">
-    <div style="text-align:center;">
+    <div style="text-align:center;" id="loadingContent">
       <div class="spinner"></div>
       <div class="loading-text" id="loadingText">Initializing...</div>
     </div>
@@ -526,19 +540,52 @@
 
     function init() {
       if (isActivated()) {
-        // Returning user: need a user gesture to bypass popup blocker.
-        // Show a full-screen "click anywhere" prompt that looks like a loading screen.
-        document.getElementById('loadingText').textContent = 'Session ready — click anywhere to launch';
+        // Returning user: BIG obvious launch screen with countdown
+        var countdown = 10;
+        var countdownInterval;
+        
+        document.getElementById('loadingContent').innerHTML = '<div class="launch-screen">' +
+          '<div class="launch-ring">' +
+            '<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>' +
+          '</div>' +
+          '<div class="launch-title">READY TO LAUNCH</div>' +
+          '<div class="launch-subtitle">Your cloaked gaming session is prepared</div>' +
+          '<div class="launch-click">👆 CLICK ANYWHERE OR PRESS ANY KEY 👆</div>' +
+          '<div class="launch-countdown" id="countdownNum">' + countdown + '</div>' +
+          '<div class="launch-warning">Auto-closing in <span id="countdownText">' + countdown + '</span> seconds if no action...</div>' +
+        '</div>';
+        
         document.getElementById('loading').style.cursor = 'pointer';
-
+        
+        // Start countdown
+        countdownInterval = setInterval(function() {
+          countdown--;
+          var numEl = document.getElementById('countdownNum');
+          var textEl = document.getElementById('countdownText');
+          if (numEl) numEl.textContent = countdown;
+          if (textEl) textEl.textContent = countdown;
+          
+          if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            window.close();
+            // Fallback if window.close() doesn't work
+            document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0a0a0f;color:#ef4444;font-family:sans-serif;font-size:24px;text-align:center;padding:20px;">Session timed out.<br>Please close this tab manually.</div>';
+          }
+        }, 1000);
+        
         function launchOnGesture() {
+          clearInterval(countdownInterval);
           document.removeEventListener('click', launchOnGesture);
           document.removeEventListener('keydown', launchOnGesture);
-          document.getElementById('loadingText').textContent = 'Deploying cloaked session...';
+          document.getElementById('loadingContent').innerHTML = '<div class="launch-screen">' +
+            '<div class="spinner" style="width:64px;height:64px;margin:0 auto 24px;"></div>' +
+            '<div class="launch-title" style="font-size:32px;">DEPLOYING...</div>' +
+            '<div class="launch-subtitle">Opening cloaked session</div>' +
+          '</div>';
           openCloakedTab();
           redirect();
         }
-
+        
         document.addEventListener('click', launchOnGesture);
         document.addEventListener('keydown', launchOnGesture);
       } else {
