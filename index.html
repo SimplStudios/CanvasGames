@@ -252,33 +252,16 @@
       }
 
       function launchSequence() {
-        var tab = window.open('about:blank', '_blank');
-
-        if (!tab || tab.closed || typeof tab.closed === 'undefined') {
-          alert('Popup was blocked! Please allow popups for this site and try again.');
-          return;
-        }
-
-        // Build the about:blank tab with an iframe pointing back to this site
-        var doc = tab.document;
-        doc.title = 'Canvas - Dashboard';
-        var link = doc.createElement('link');
-        link.rel = 'icon';
-        link.href = 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico';
-        doc.head.appendChild(link);
-        doc.body.style.margin = '0';
-        doc.body.style.overflow = 'hidden';
-
-        var iframe = doc.createElement('iframe');
-        iframe.src = location.origin + location.pathname + '?g';
+        var tab = window.open();
+        if (!tab) { alert('Popup was blocked! Please allow popups for this site.'); return; }
+        var iframe = tab.document.createElement('iframe');
+        iframe.src = location.href.split('?')[0] + '?g';
         iframe.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;border:none';
-        iframe.setAttribute('allowfullscreen', '');
         iframe.setAttribute('allow', 'fullscreen');
-        doc.body.appendChild(iframe);
-
+        iframe.allowFullscreen = true;
+        tab.document.body.appendChild(iframe);
+        tab.document.title = 'Canvas - Dashboard';
         tab.focus();
-
-        // Redirect this tab to Canvas as cover
         setTimeout(function() {
           location.href = 'https://allenisd.instructure.com/?login_success=1';
         }, 200);
