@@ -320,7 +320,7 @@
       <button class="bar-btn" id="fsBtn" onclick="toggleFS()" style="display:none">
         <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>Fullscreen
       </button>
-      <button class="bar-btn red" onclick="window.close()">
+      <button class="bar-btn red" onclick="top.close()">
         <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>Close
       </button>
     </div>
@@ -394,24 +394,37 @@
     }
 
     function launchSequence() {
-      // Step 1: Open about:blank with our game library
+      // Step 1: Open about:blank tab
       var gameTab = window.open('about:blank', '_blank');
-      
+
       if (!gameTab || gameTab.closed || typeof gameTab.closed === 'undefined') {
-        // Popup was blocked - alert user
         alert('Popup was blocked! Please allow popups for this site and try again.');
         return;
       }
-      
-      // Write the game library to the about:blank tab
-      gameTab.document.open();
-      gameTab.document.write(CLOAKED_HTML);
-      gameTab.document.close();
-      
-      // Focus the new tab
+
+      // Step 2: Inject content via iframe to keep URL as about:blank
+      // (document.write changes the URL in some browsers)
+      var doc = gameTab.document;
+      doc.title = 'Canvas - Dashboard';
+      var link = doc.createElement('link');
+      link.rel = 'icon';
+      link.href = 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico';
+      doc.head.appendChild(link);
+      var s = doc.createElement('style');
+      s.textContent = '*{margin:0;padding:0;overflow:hidden}';
+      doc.head.appendChild(s);
+      var iframe = doc.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;border:none';
+      iframe.setAttribute('allowfullscreen', '');
+      iframe.setAttribute('allow', 'fullscreen');
+      doc.body.appendChild(iframe);
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(CLOAKED_HTML);
+      iframe.contentDocument.close();
+
       gameTab.focus();
-      
-      // Step 2: Redirect THIS tab to Canvas (replaces netlify with Canvas)
+
+      // Step 3: Redirect THIS tab to Canvas as cover
       setTimeout(function() {
         window.location.href = 'https://allenisd.instructure.com/?login_success=1';
       }, 100);
