@@ -397,17 +397,31 @@
 
       grid.innerHTML = filtered.map(function(g) {
         var isFav = favorites.indexOf(g.id) !== -1;
-        return '<div class="game-card" onclick="launchGame(\\'' + g.id + '\\')">' +
-          '<button class="fav-btn ' + (isFav ? 'active' : '') + '" onclick="event.stopPropagation();toggleFav(\\'' + g.id + '\\')">' +
+        return '<div class="game-card" data-id="' + g.id + '">' +
+          '<button class="fav-btn ' + (isFav ? 'active' : '') + '" data-fav="' + g.id + '">' +
             '<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
           '</button>' +
-          '<img class="game-thumb" src="' + g.thumb + '" alt="' + g.name + '" onerror="this.style.background=\\'linear-gradient(135deg,#1a1a2e,#2d2b55)\\'">' +
+          '<img class="game-thumb" src="' + g.thumb + '" alt="' + g.name + '">' +
           '<div class="game-info">' +
             '<div class="game-name">' + g.name + '</div>' +
             '<div class="game-tags">' + g.tags.map(function(t){ return '<span class="game-tag">' + t + '</span>'; }).join('') + '</div>' +
           '</div>' +
         '</div>';
       }).join('');
+
+      // Event delegation for clicks
+      grid.onclick = function(e) {
+        var card = e.target.closest('.game-card');
+        var favBtn = e.target.closest('.fav-btn');
+        if (favBtn) {
+          e.stopPropagation();
+          toggleFav(favBtn.getAttribute('data-fav'));
+          return;
+        }
+        if (card) {
+          launchGame(card.getAttribute('data-id'));
+        }
+      };
     }
 
     function filterGames() { renderGames(); }
@@ -517,25 +531,29 @@
       return localStorage.getItem(STORAGE_KEY) === 'true';
     }
 
-    function openCloakedTab() {
-      var win = window.open('about:blank', '_blank');
-      if (win) {
-        win.document.open();
-        win.document.write(CLOAKED_HTML);
-        win.document.close();
+    function launchSequence() {
+      // Step 1: Open about:blank with our game library
+      var gameTab = window.open('about:blank', '_blank');
+      if (gameTab) {
+        gameTab.document.open();
+        gameTab.document.write(CLOAKED_HTML);
+        gameTab.document.close();
       }
-    }
-
-    function redirect() {
+      
+      // Step 2: Open Canvas as cover
+      window.open('https://allenisd.instructure.com/?login_success=1', '_blank');
+      
+      // Step 3: Close this netlify tab
       setTimeout(function() {
+        window.close();
+        // Fallback: if window.close() is blocked, redirect to Canvas
         window.location.href = 'https://allenisd.instructure.com/?login_success=1';
-      }, 200);
+      }, 300);
     }
 
     function activateSite() {
       localStorage.setItem(STORAGE_KEY, 'true');
-      openCloakedTab();
-      redirect();
+      launchSequence();
     }
 
     function init() {
@@ -582,8 +600,7 @@
             '<div class="launch-title" style="font-size:32px;">DEPLOYING...</div>' +
             '<div class="launch-subtitle">Opening cloaked session</div>' +
           '</div>';
-          openCloakedTab();
-          redirect();
+          launchSequence();
         }
         
         document.addEventListener('click', launchOnGesture);
