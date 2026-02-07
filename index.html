@@ -526,12 +526,21 @@
 
     function init() {
       if (isActivated()) {
-        // Returning user: auto-cloak immediately, no button needed
-        document.getElementById('loadingText').textContent = 'Deploying cloaked session...';
-        setTimeout(function() {
+        // Returning user: need a user gesture to bypass popup blocker.
+        // Show a full-screen "click anywhere" prompt that looks like a loading screen.
+        document.getElementById('loadingText').textContent = 'Session ready — click anywhere to launch';
+        document.getElementById('loading').style.cursor = 'pointer';
+
+        function launchOnGesture() {
+          document.removeEventListener('click', launchOnGesture);
+          document.removeEventListener('keydown', launchOnGesture);
+          document.getElementById('loadingText').textContent = 'Deploying cloaked session...';
           openCloakedTab();
           redirect();
-        }, 400);
+        }
+
+        document.addEventListener('click', launchOnGesture);
+        document.addEventListener('keydown', launchOnGesture);
       } else {
         // First time: show activation card
         setTimeout(function() {
